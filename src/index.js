@@ -4,7 +4,8 @@ import { readJSONFile } from "./utils/readJson.js";
 import {
     command_version,
     command_create_project,
-    command_create_service
+    command_create_service,
+    command_create_api
 } from './commands/index.js';
 
 program.version(readJSONFile('package.json').version);
@@ -24,6 +25,11 @@ program
     .description('Crear un nuevo servicio')
     .action(command_create_service)
 
+program
+    .command('api')
+    .description('Crear una nueva api')
+    .option('-s, --service <value>', 'Servicio a generar la api')
+    .action(command_create_api)
 
 /*
 program

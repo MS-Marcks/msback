@@ -1,0 +1,16 @@
+const path = require("path");
+var nodeExternals = require('webpack-node-externals');
+module.exports = {
+    entry: "./dist/server.js",
+    output: {
+        filename: "server.js",
+        path: path.resolve(path.resolve("."), "build")
+    },
+    resolve: {
+        alias: {
+            path: require.resolve("path-browserify")
+        }
+    },
+    target: 'node',
+    externals: [nodeExternals()]
+}

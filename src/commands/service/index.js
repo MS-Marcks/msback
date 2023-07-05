@@ -1,21 +1,12 @@
 import "../../utils/colors.js"
+import jsonFormat from 'json-format';
 import inquirer from 'inquirer';
 import path from "path";
 import fs from "fs";
 import { service } from "../../templates/service.js"
-import { readJSONFile } from '../../utils/readJson.js';
+import { readFileModule, readJSONFile } from '../../utils/readJson.js';
 
-const baseDir = path.join(path.resolve("."), "src");
-
-function getHash(longitud) {
-    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@|{[()¿';
-    let cadenaAleatoria = '';
-    for (let i = 0; i < longitud; i++) {
-        const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
-        cadenaAleatoria += caracteres.charAt(indiceAleatorio);
-    }
-    return cadenaAleatoria;
-}
+const baseDir = path.join(path.resolve("."));
 
 export function command_create_service() {
     inquirer
@@ -106,7 +97,7 @@ export function command_create_service() {
             }
         ])
         .then(answers => {
-            const root = path.join(baseDir, answers.name.toLowerCase());
+            const root = path.join(baseDir, "src", answers.name.toLowerCase());
             if (fs.existsSync(root)) {
                 console.log(`\n${red("Ya existe el proyecto")}`)
                 return;
@@ -114,71 +105,44 @@ export function command_create_service() {
             fs.mkdirSync(root);
             const serviceLen = service.length;
             for (let index = 0; index < serviceLen; index++) {
-                const element = service[index];
-                if (element.parent.length === 1) {
-                    if (element.type === "file") {
-                        console.log(green("CREATED FILE"), path.join(element.parent[0], element.name.replace(/{{name}}/g, answers.name.toLowerCase())));
-                        fs.writeFileSync(
-                            path.join(root, element.parent[0], element.name.replace(/{{name}}/g, answers.name.toLowerCase())),
-                            element.content.replace(/{{name}}/g, answers.name.toLowerCase()).replace(/{{NAME}}/g, answers.name.toUpperCase())
-                        );
-                    } else if (element.type === "folder") {
-                        console.log(green("CREATED FOLDER"), path.join(element.parent[0], element.name));
-                        fs.mkdirSync(path.join(root, element.parent[0], element.name))
-                    }
-                } else if (element.parent.length > 1) {
-                    let path_temp = "";
-                    for (let i = 0; i < element.parent.length; i++) {
-                        path_temp = path.join(path_temp, element.parent[i]);
-                    }
-                    if (element.type === "file") {
-                        console.log(green("CREATED FILE"), path.join(path_temp, element.name.replace(/{{name}}/g, answers.name.toLowerCase())));
-                        fs.writeFileSync(
-                            path.join(root, path_temp, element.name.replace(/{{name}}/g, answers.name.toLowerCase())),
-                            element.content.replace(/{{name}}/g, answers.name.toLowerCase()).replace(/{{NAME}}/g, answers.name.toUpperCase())
-                        );
-                    } else if (element.type === "folder") {
-                        console.log(green("CREATED FOLDER"), path.join(path_temp, element.name));
-                        fs.mkdirSync(path.join(root, path_temp, element.name))
-                    }
-                } else {
-                    if (element.type === "file") {
-                        console.log(green("CREATED FILE"), element.name.replace(/{{name}}/g, answers.name.toLowerCase()));
-                        fs.writeFileSync(
-                            path.join(root, element.name.replace(/{{name}}/g, answers.name.toLowerCase())),
-                            element.content.replace(/{{name}}/g, answers.name.toLowerCase()).replace(/{{NAME}}/g, answers.name.toUpperCase())
-                        );
-                    } else if (element.type === "folder") {
-                        console.log(green("CREATED FOLDER"), element.name);
-                        fs.mkdirSync(path.join(root, element.name))
-                    }
+                const { name, type, content, parent } = service[index];
+                if (type === "file") {
+                    console.log(green("CREATED FILE"), path.join(parent, name.replace(/{{name}}/g, answers.name.toLowerCase())));
+                    fs.writeFileSync(
+                        path.join(root, parent, name.replace(/{{name}}/g, answers.name.toLowerCase())),
+                        readFileModule(content)
+                            .replace(/{{name}}/g, answers.name.toLowerCase())
+                            .replace(/{{NAME}}/g, answers.name.toUpperCase())
+                            .replace(/{{DB_HOST}}/g, answers.server)
+                            .replace(/{{DB_USER}}/g, answers.user)
+                            .replace(/{{DB_PASSWORD}}/g, answers.password)
+                            .replace(/{{DB_DATABASE}}/g, answers.database)
+                            .replace(/{{DB_HOST}}/g, answers.server)
+                            .replace(/{{DB_PORT}}/g, answers.port)
+                            .replace(/{{PORT}}/g, answers.portapp)
+                    );
+                } else if (type === "folder") {
+                    console.log(green("CREATED FOLDER"), path.join(parent, name));
+                    fs.mkdirSync(path.join(root, parent, name))
                 }
             }
-            console.log(green("CREATED FILE"), path.join("env", "." + answers.name.toLowerCase() + ".env"));
-            fs.writeFileSync(
-                path.join(root, "..", "..", "env", "." + answers.name.toLowerCase() + ".env"),
-                `
-#HASH
-KEY_TOKEN_${answers.name.toUpperCase()}=${getHash(128)}
-HASH_ENCRYPT_${answers.name.toUpperCase()}=${getHash(128)}
-#HASH
-
-DB_HOST=${answers.server}
-DB_USER=${answers.user}
-DB_PASSWORD=${answers.password}
-DB_DATABASE=${answers.database}
-DB_PORT=${answers.port}
-PORT=${answers.portapp}
-
-                `);
-
-            const config_service = readJSONFile("config.ms.json");
-            config_service.push({
-                service: answers.name.toLowerCase(),
-                apis: []
-            })
             console.log(yellow("UPDATE FILE"), "config.ms.json");
-            fs.writeFileSync(path.join(root, "..", "..", "config.ms.json"), JSON.stringify(config_service));
+            let config_ms_file = readJSONFile("config.ms.json", baseDir);
+            config_ms_file.service.push(answers.name.toLowerCase())
+            fs.writeFileSync(path.join(baseDir, "config.ms.json"), jsonFormat(config_ms_file));
+
+            if (config_ms_file.bundle === "webpack") {
+                const scripts = JSON.parse(`{"dev:${answers.name.toLowerCase()}": "npx nodemon --exec babel-node ./src/${answers.name.toLowerCase()}/server",
+                "build-babel:${answers.name.toLowerCase()}": "babel -d ./dist ./src/${answers.name.toLowerCase()} -s",
+                "build:${answers.name.toLowerCase()}": "npm run clean && npm run build-babel:${answers.name.toLowerCase()}",
+                "package:${answers.name.toLowerCase()}": "npm run build:${answers.name.toLowerCase()} && npm run webpack"   
+                }`)
+
+                console.log(yellow("UPDATE FILE"), "package.json");
+                let package_file = readJSONFile("package.json", baseDir);
+                Object.assign(package_file.scripts, scripts);
+                fs.writeFileSync(path.join(baseDir, "package.json"), jsonFormat(package_file));
+            }
         });
 }
 

@@ -1,0 +1,13 @@
+'use strict';
+import * as CryptoJS from 'crypto-js';
+
+if (process.env.NODE_ENV !== 'production') {
+    require("dotenv").config({ path: "./env/.{{name}.env" })
+}
+
+export const Encrypt = ( value ) => {
+    return CryptoJS.AES.encrypt(value, process.env.HASH_ENCRYPT_{{NAME}}).toString();
+}
+export const Decrypt = (value) => {
+    return CryptoJS.AES.decrypt(value, process.env.HASH_ENCRYPT_{{NAME}}).toString(CryptoJS.enc.Utf8);
+}
