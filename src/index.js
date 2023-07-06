@@ -1,5 +1,5 @@
 import { program } from 'commander';
-import { readJSONFile } from "./utils/readJson.js";
+import { readJSONFileModule } from "./utils/readJson.js";
 
 import {
     command_version,
@@ -8,7 +8,7 @@ import {
     command_create_api
 } from './commands/index.js';
 
-program.version(readJSONFile('package.json').version);
+program.version(readJSONFileModule('package.json').version);
 
 program
     .command('version')
