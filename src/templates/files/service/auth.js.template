@@ -2,9 +2,7 @@
 if (process.env.NODE_ENV !== 'production') {
     require("dotenv").config({ path: "./env/.{{name}}.env" })
 }
-
 //AUTH (NOT DELETE)
-
 module.exports = {
-    //IMPORT (NOT DELETE)
+//IMPORT (NOT DELETE)
 }

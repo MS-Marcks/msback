@@ -34,7 +34,8 @@ export function command_create_service() {
                         return 'Ingrese el perto para el servicio.';
                     }
                 }
-            }/*,
+            }
+            /*,
             {
                 type: 'list',
                 name: 'engine',
@@ -128,7 +129,8 @@ export function command_create_service() {
             }
             console.log(yellow("UPDATE FILE"), "config.ms.json");
             let config_ms_file = readJSONFile("config.ms.json", baseDir);
-            config_ms_file.service.push(answers.name.toLowerCase())
+            config_ms_file.services.push(answers.name.toLowerCase());
+            Object.assign(config_ms_file.service, JSON.parse(`{"${answers.name.toLowerCase()}":{"name":"${answers.name.toLowerCase()}","apis":[],"api":{}}}`));
             fs.writeFileSync(path.join(baseDir, "config.ms.json"), jsonFormat(config_ms_file));
 
             if (config_ms_file.bundle === "webpack") {

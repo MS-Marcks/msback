@@ -1,6 +1,6 @@
 const AUTHoptions_{{name}} = {
     auth: {
-        UrlStart: "/session",
+        UrlStart: "/{{entry}}",
         ActiveTime: '2h',
         KEY_TOKEN: process.env.KEY_TOKEN_{{NAME}},
         NameToken: "access-token-{{name}}",

@@ -4,7 +4,7 @@ import inquirer from 'inquirer';
 import path from "path";
 import fs from "fs";
 
-import { project } from "../../templates/new.js"
+import { api } from "../../templates/api.js"
 import { webpack, webpack_modules } from '../../templates/webpack.compiler.js';
 import { readFileModule, readJSONFile, readFile } from '../../utils/readJson.js';
 import { executeCommand } from "../../utils/process.command.js";
@@ -24,7 +24,7 @@ function getHash(longitud) {
 export async function command_create_api(options) {
 
     let config_ms_file = readJSONFile("config.ms.json", baseDir);
-    const service = config_ms_file.service.find((e) => e === options.service)
+    const service = config_ms_file.services.find((e) => e === options.service)
     if (service === undefined) {
         console.log(`\n${red("no existe el servicio")}`)
         return;
@@ -77,45 +77,80 @@ export async function command_create_api(options) {
             }
         ])
         .then(async (answers) => {
-
             const envFile = readFile(`.env.${nameProject}`, baseEnv);
             let hashes = `\nKEY_TOKEN_${answers.name.toUpperCase()}=${getHash(128)}\n`;
             if (answers.encrypt === "si") {
                 hashes += `HASH_ENCRYPT_${answers.name.toUpperCase()}=${getHash(128)}\n`;
+                console.log(green("CREATED FILE"), path.join(api[0].parent, api[0].name.replace(/{{name}}/g, answers.name.toLowerCase())));
+                fs.writeFileSync(path.join(root, api[0].parent, api[0].name.replace(/{{name}}/g, answers.name.toLowerCase())),
+                    readFileModule(api[0].content)
+                        .replace(/{{name}}/g, answers.name.toLowerCase())
+                        .replace(/{{NAME}}/g, answers.name.toUpperCase())
+                );
             }
+            // ###################################### CREATE ROUTE ############################
+            console.log(green("CREATED FILE"), path.join(api[1].parent, api[1].name.replace(/{{name}}/g, answers.name.toLowerCase())));
+            fs.writeFileSync(path.join(root, api[1].parent, api[1].name.replace(/{{name}}/g, answers.name.toLowerCase())),
+                readFileModule(api[1].content)
+                    .replace(/{{name}}/g, answers.name.toLowerCase())
+                    .replace(/{{NAME}}/g, answers.name.toUpperCase())
+            );
+            // ###################################### CREATE ROUTE ############################
+
+
+            // ###################################### UPDATE AUTH ############################
+            const baseAuth = path.join(root, "config", "auth");
+            const authFile = readFile(`index.js`, baseAuth);
+            const authTemplate = readFileModule(path.join("src", "templates", "files", "api", "authconf.js.template"))
+                .replace(/{{name}}/g, answers.name.toLowerCase())
+                .replace(/{{NAME}}/g, answers.name.toUpperCase())
+                .replace(/{{entry}}/g, answers.entry.toLowerCase());
+            let authArrAddAuthTemplate = authFile.split("//AUTH (NOT DELETE)");
+            const newAuthFile_1 = authArrAddAuthTemplate[0] + authTemplate + "//AUTH (NOT DELETE)" + authArrAddAuthTemplate[1];
+            let authArrAddImport = newAuthFile_1.split("//IMPORT (NOT DELETE)");
+            const newAuthFile = authArrAddImport[0] + `\tAUTHoptions_${answers.name.toLowerCase()},\n//IMPORT (NOT DELETE)` + authArrAddImport[1];
+            console.log(yellow("UPDATE FILE"), path.join("config", "auth", "index.js"));
+            fs.writeFileSync(path.join(baseAuth, `index.js`), newAuthFile);
+            // ###################################### UPDATE AUTH ############################
+
+            // ###################################### UPDATE SERVER ############################
+            const serverFile = readFile(`server.js`, root);
+            let serverArrAddRoutes = serverFile.split("//ROUTE (NOT DELETE)");
+            const newServerFile_1 = serverArrAddRoutes[0] + `import routes${answers.name.toLowerCase()} from './config/route/route.${answers.name.toLowerCase()}'\n` + "//ROUTE (NOT DELETE)" + serverArrAddRoutes[1];
+            let serverArrAddImport = newServerFile_1.split("//AUTH (NOT DELETE)");
+            const newServerFile_2 = serverArrAddImport[0] + `\tAUTHoptions_${answers.name.toLowerCase()},\n//AUTH (NOT DELETE)` + serverArrAddImport[1];
+            let serverArrAddApi = newServerFile_2.split("//API (NOT DELETE)");
+            const newServerFile = serverArrAddApi[0] + `app.use('/api/${answers.name.toLowerCase()}', cors(AUTHoptions_${answers.name.toLowerCase()}.cors),  auth(AUTHoptions_${answers.name.toLowerCase()}.auth), routes${answers.name.toLowerCase()});\n//API (NOT DELETE)` + serverArrAddApi[1];
+            console.log(yellow("UPDATE FILE"), path.join("server.js"));
+            fs.writeFileSync(path.join(root, `server.js`), newServerFile);
+            // ###################################### UPDATE SERVER ############################
+
+            // ###################################### UPDATE ENV ############################
             let hashesArr = envFile.split("#HASH")[0] + hashes;
             const newDataEnv = `${hashesArr}#HASH${envFile.split("#HASH")[1]}`;
+            console.log(yellow("UPDATE FILE"), `env/.env.${nameProject}`);
             fs.writeFileSync(path.join(baseEnv, `.env.${nameProject}`), newDataEnv);
+            // ###################################### UPDATE ENV ############################    
 
-            /*const initLen = project.length;
-            for (let index = 0; index < initLen; index++) {
-                const { name, type, content, parent } = project[index];
-                if (type === "file") {
-                    console.log(green("CREATED FILE"), path.join(parent, name));
-                    fs.writeFileSync(path.join(root, parent, name), readFileModule(content).replace(/{{name}}/g, nameProject));
-                } else if (type === "folder") {
-                    console.log(green("CREATED FOLDER"), path.join(parent, name));
-                    fs.mkdirSync(path.join(root, parent, name))
+            // ###################################### CREATE FOLDER API ############################
+            fs.mkdirSync(path.join(root, "controller", answers.name.toLowerCase()));
+            // ###################################### CREATE FOLDER API ############################
+
+            console.log(yellow("UPDATE FILE"), "config.ms.json");
+            let config_ms_file = readJSONFile("config.ms.json", baseDir);
+            // ###################################### CREATE FOLDER API ############################
+            config_ms_file.service[nameProject].apis.push(answers.name.toLowerCase())
+            Object.assign(config_ms_file.service[nameProject].api, JSON.parse(`
+            {
+                "${answers.name.toLowerCase()}":{
+                    "name":"${answers.name.toLowerCase()}",
+                    "encrypt": "${answers.encrypt}",
+                    "controllers":[],
+                    "controller":{}
                 }
             }
+            `));
 
-            if (answers.bundle === "webpack") {
-                console.log(blue("## CONFIGURE WEBPACK ##"));
-                const { name, type, content, parent } = webpack;
-                console.log(green("CREATED FILE"), path.join(parent, name));
-                fs.writeFileSync(path.join(root, parent, name), readFileModule(content).replace(/{{name}}/g, nameProject));
-
-                console.log(yellow("UPDATE FILE"), "package.json");
-                let package_file = readJSONFile("package.json", root);
-
-                Object.assign(package_file.scripts, JSON.parse(`{"clean": "rm -rf ./dist && mkdir ./dist && rm -rf ./build && mkdir ./build","webpack": "webpack --mode production"}`));
-                Object.assign(package_file.devDependencies, webpack_modules.modules);
-                fs.writeFileSync(path.join(root, "package.json"), jsonFormat(package_file));
-
-                console.log(yellow("UPDATE FILE"), "config.ms.json");
-                let config_ms_file = readJSONFile("config.ms.json", root);
-                config_ms_file.bundle = answers.bundle;
-                fs.writeFileSync(path.join(root, "config.ms.json"), jsonFormat(config_ms_file));
-            }*/
+            fs.writeFileSync(path.join(baseDir, "config.ms.json"), jsonFormat(config_ms_file));
         });
 }

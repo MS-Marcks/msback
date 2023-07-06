@@ -4,13 +4,9 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import morgan from 'morgan'
 import auth from './middleware/AuthMiddleware';
-
-
 //ROUTE (NOT DELETE)
 
-
 import {
-
 //AUTH (NOT DELETE)
 } from './config/auth'
 
