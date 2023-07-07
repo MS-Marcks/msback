@@ -6,6 +6,7 @@ import fs from "fs";
 
 import { project } from "../../templates/new.js"
 import { webpack, webpack_modules } from '../../templates/webpack.compiler.js';
+import { esbuild, esbuild_modules } from '../../templates/esbuild.compiler.js';
 import { readFileModule, readJSONFile } from '../../utils/readJson.js';
 import { executeCommand } from "../../utils/process.command.js";
 
@@ -60,25 +61,28 @@ export async function command_create_project() {
                     fs.mkdirSync(path.join(root, parent, name))
                 }
             }
+            console.log(blue("## CONFIGURE WEBPACK ##"));
+            const { name, type, content, parent } = (answers.bundle === "webpack") ? webpack : esbuild;
+            console.log(green("CREATED FILE"), path.join(parent, name));
+            fs.writeFileSync(path.join(root, parent, name), readFileModule(content).replace(/{{name}}/g, nameProject));
 
+            let package_file = readJSONFile("package.json", root);
             if (answers.bundle === "webpack") {
-                console.log(blue("## CONFIGURE WEBPACK ##"));
-                const { name, type, content, parent } = webpack;
-                console.log(green("CREATED FILE"), path.join(parent, name));
-                fs.writeFileSync(path.join(root, parent, name), readFileModule(content).replace(/{{name}}/g, nameProject));
-
-                console.log(yellow("UPDATE FILE"), "package.json");
-                let package_file = readJSONFile("package.json", root);
-
                 Object.assign(package_file.scripts, JSON.parse(`{"clean": "rm -rf ./dist && mkdir ./dist && rm -rf ./build && mkdir ./build","webpack": "webpack --mode production"}`));
                 Object.assign(package_file.devDependencies, webpack_modules.modules);
-                fs.writeFileSync(path.join(root, "package.json"), jsonFormat(package_file));
-
-                console.log(yellow("UPDATE FILE"), "config.ms.json");
-                let config_ms_file = readJSONFile("config.ms.json", root);
-                config_ms_file.bundle = answers.bundle;
-                fs.writeFileSync(path.join(root, "config.ms.json"), jsonFormat(config_ms_file));
+            } else if (answers.bundle === "esbuild") {
+                Object.assign(package_file.scripts, JSON.parse(`{"clean": "rm -rf ./dist && mkdir ./dist && rm -rf ./build && mkdir ./build","esbuild": "node ./esbuild.config.js"}`));
+                Object.assign(package_file.devDependencies, esbuild_modules.modules);
             }
+
+            console.log(yellow("UPDATE FILE"), "package.json");
+            fs.writeFileSync(path.join(root, "package.json"), jsonFormat(package_file));
+
+            console.log(yellow("UPDATE FILE"), "config.ms.json");
+            let config_ms_file = readJSONFile("config.ms.json", root);
+            config_ms_file.bundle = answers.bundle;
+            fs.writeFileSync(path.join(root, "config.ms.json"), jsonFormat(config_ms_file));
+
             console.log(blue("## INSTALL MODULES ##"));
             await executeCommand('npm', ['install'], { cwd: root });
 

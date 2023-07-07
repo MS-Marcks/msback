@@ -133,18 +133,19 @@ export function command_create_service() {
             Object.assign(config_ms_file.service, JSON.parse(`{"${answers.name.toLowerCase()}":{"name":"${answers.name.toLowerCase()}","apis":[],"api":{}}}`));
             fs.writeFileSync(path.join(baseDir, "config.ms.json"), jsonFormat(config_ms_file));
 
+            let scripts = `{"dev:${answers.name.toLowerCase()}": "npx nodemon --exec babel-node ./src/${answers.name.toLowerCase()}/server",
+            "build-babel:${answers.name.toLowerCase()}": "babel -d ./dist ./src/${answers.name.toLowerCase()} -s",
+            "build:${answers.name.toLowerCase()}": "npm run clean && npm run build-babel:${answers.name.toLowerCase()}",
+            `;
             if (config_ms_file.bundle === "webpack") {
-                const scripts = JSON.parse(`{"dev:${answers.name.toLowerCase()}": "npx nodemon --exec babel-node ./src/${answers.name.toLowerCase()}/server",
-                "build-babel:${answers.name.toLowerCase()}": "babel -d ./dist ./src/${answers.name.toLowerCase()} -s",
-                "build:${answers.name.toLowerCase()}": "npm run clean && npm run build-babel:${answers.name.toLowerCase()}",
-                "package:${answers.name.toLowerCase()}": "npm run build:${answers.name.toLowerCase()} && npm run webpack"   
-                }`)
-
-                console.log(yellow("UPDATE FILE"), "package.json");
-                let package_file = readJSONFile("package.json", baseDir);
-                Object.assign(package_file.scripts, scripts);
-                fs.writeFileSync(path.join(baseDir, "package.json"), jsonFormat(package_file));
+                scripts += `"package:${answers.name.toLowerCase()}": "npm run build:${answers.name.toLowerCase()} && npm run webpack"}`
+            } else if (config_ms_file.bundle === "esbuild") {
+                scripts += `"package:${answers.name.toLowerCase()}": "npm run build:${answers.name.toLowerCase()} && npm run esbuild"}`
             }
+            console.log(yellow("UPDATE FILE"), "package.json");
+            let package_file = readJSONFile("package.json", baseDir);
+            Object.assign(package_file.scripts, JSON.parse(scripts));
+            fs.writeFileSync(path.join(baseDir, "package.json"), jsonFormat(package_file));
         });
 }
 

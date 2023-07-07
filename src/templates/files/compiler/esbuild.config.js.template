@@ -1,0 +1,17 @@
+const esbuild = require('esbuild');
+const path = require('path');
+const fs = require('fs');
+
+function isExternalModule(id) {
+  const resolvedPath = path.join(path.resolve("."), "node_modules", id);
+  return fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory();
+}
+
+esbuild.build({
+  entryPoints: ["./dist/server.js"],
+  bundle: true,
+  platform: 'node',
+  external: Object.keys(require('./package.json').dependencies).filter(isExternalModule),
+  minify: true,
+  outfile: './build/server.js'
+}).catch(() => process.exit(1));
