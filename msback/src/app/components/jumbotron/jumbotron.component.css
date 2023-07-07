@@ -1,0 +1,10 @@
+.rectangle {
+    /*background: linear-gradient(to right, rgb(117, 56, 56) 40%, blue 60%);*/
+    background: linear-gradient(to bottom left, #1a1a1a 50%, #2474cc 50%);
+}
+
+.shadowed-box {
+    /*box-shadow: 10px 0 10px -5px rgba(255, 255, 255, 0.5);*/
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}

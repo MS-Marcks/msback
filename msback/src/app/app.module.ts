@@ -3,10 +3,16 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { NavComponent } from './components/nav/nav.component';
+import { JumbotronComponent } from './components/jumbotron/jumbotron.component';
+import { HowtouseComponent } from './components/howtouse/howtouse.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    NavComponent,
+    JumbotronComponent,
+    HowtouseComponent
   ],
   imports: [
     BrowserModule,
