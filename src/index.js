@@ -5,7 +5,8 @@ import {
     command_version,
     command_create_project,
     command_create_service,
-    command_create_api
+    command_create_api,
+    command_create_controller
 } from './commands/index.js';
 
 program.version(readJSONFileModule('package.json').version);
@@ -30,6 +31,13 @@ program
     .description('Crear una nueva api')
     .option('-s, --service <value>', 'Servicio a generar la api')
     .action(command_create_api)
+
+program
+    .command('controller')
+    .description('Crear un nuevo controlador')
+    .option('-s, --service <value>', 'Servicio a generar el controlador')
+    .option('-a, --api <value>', 'API a generar el controlador')
+    .action(command_create_controller)
 
 /*
 program

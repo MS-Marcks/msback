@@ -10,7 +10,6 @@ import { esbuild, esbuild_modules } from '../../templates/esbuild.compiler.js';
 import { readFileModule, readJSONFile } from '../../utils/readJson.js';
 import { executeCommand } from "../../utils/process.command.js";
 
-
 const baseDir = path.resolve(".");
 
 export async function command_create_project() {
@@ -22,6 +21,10 @@ export async function command_create_project() {
                 message: 'Ingrese nombre del projecto:',
                 validate: function (input) {
                     if (input) {
+                        const root = path.join(baseDir, input.toLowerCase());
+                        if (fs.existsSync(root)) {
+                            return "Ya existe el proyecto";
+                        }
                         return true;
                     } else {
                         return 'Ingrese un nombre para el proyecto.';
@@ -46,9 +49,10 @@ export async function command_create_project() {
             const nameProject = answers.name.toLowerCase();
             const root = path.join(baseDir, nameProject);
             if (fs.existsSync(root)) {
-                console.log(`\n${red("Ya existe el proyecto")}`)
+                console.log(`\n\t${red("Ya existe el proyecto")}`)
                 return;
             }
+
             fs.mkdirSync(root);
             const initLen = project.length;
             for (let index = 0; index < initLen; index++) {

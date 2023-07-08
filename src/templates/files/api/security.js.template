@@ -2,7 +2,7 @@
 import * as CryptoJS from 'crypto-js';
 
 if (process.env.NODE_ENV !== 'production') {
-    require("dotenv").config({ path: "./env/.{{name}}.env" })
+    require("dotenv").config({ path: "./env/.env.{{name}}" })
 }
 
 export const Encrypt = ( value ) => {

@@ -1,0 +1,11 @@
+import { Router } from 'express'
+import Controller from '../controller'
+
+const router = Router();
+
+router.get("/", Controller.Search)
+router.post("/", Controller.Create)
+router.put("/", Controller.Update)
+router.patch("/", Controller.Delete)
+
+export default router;

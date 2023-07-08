@@ -1,0 +1,89 @@
+import { query } from '../../../../tools/query';
+
+class {{name}} {
+    static async Create(req, res) {
+        try {
+            let body = req.body;
+            const q = await query(`CALL `, []);
+            if (q.code === 200) {
+                const result = q.query.affectedRows;
+                if (result >= 1) {
+                    const response = {message: "SE CREO EXITOSAMENTE", code: 200 };
+                    res.json(response);
+                } else {
+                    const response = { message: "NO SE CREO EXITOSAMENTE", code: 404 };
+                    res.json(response);
+                }
+            } else if (q.code === 404) {
+                const result = 'Error Interno del Servidor, Pongase en contacto con el administrador';
+                const response = { message: result, code: 500 };
+                res.json(response);
+            }
+        } catch (err) {
+            const result = 'Error Interno del Servidor, Pongase en contacto con el administrador';
+            const response = { message: result, code: 500 };
+            res.json(response);
+        }
+    }
+    static async Search(req, res) {
+        const q = await query(`CALL`);
+        if (q.code === 200) {
+            const result = q.query[0];
+            const response = { message: result, code: 200 };
+            res.json(response);
+        } else if (q.code === 404) {
+            const result = 'Error Interno del Servidor, Pongase en contacto con el administrador';
+            const response = { message: result, code: 404 };
+            res.json(response);
+        }
+    }
+    static async Update(req, res) {
+        try {
+            let body = req.body;
+            const q = await query(`CALL `, []);
+            if (q.code === 200) {
+                const result = q.query.affectedRows;
+                if (result >= 1) {
+                    const response = { message: "SE ACTUALIZO EXITOSAMENTE", code: 200 };
+                    res.json(response);
+                } else {
+                    const response = { message: "NO SE ACTUALIZO EXITOSAMENTE", code: 404 };
+                    res.json(response);
+                }
+            } else if (q.code === 404) {
+                const result = 'Error Interno del Servidor, Pongase en contacto con el administrador';
+                const response = { message: result, code: 500 };
+                res.json(response);
+            }
+        } catch (err) {
+            const result = 'Error Interno del Servidor, Pongase en contacto con el administrador';
+            const response = { message: result, code: 500 };
+            res.json(response);
+        }
+    }
+    static async Delete(req, res) {
+        try {
+            let body = req.body;
+            const q = await query(`CALL `, []);
+            if (q.code === 200) {
+                const result = q.query.affectedRows;
+                if (result >= 1) {
+                    const response = { message: "SE ELIMINO EXITOSAMENTE", code: 200 };
+                    res.json(response);
+                } else {
+                    const response = { message: "NO SE ELIMINO EXITOSAMENTE", code: 404 };
+                    res.json(response);
+                }
+            } else if (q.code === 404) {
+                const result = 'Error Interno del Servidor, Pongase en contacto con el administrador';
+                const response = { message: result, code: 500 };
+                res.json(response);
+            }
+        } catch (err) {
+            const result = 'Error Interno del Servidor, Pongase en contacto con el administrador';
+            const response = { message: result, code: 500 };
+            res.json(response);
+        }
+    }
+}
+export default {{name}};

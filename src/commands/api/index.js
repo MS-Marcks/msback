@@ -5,34 +5,33 @@ import path from "path";
 import fs from "fs";
 
 import { api } from "../../templates/api.js"
-import { webpack, webpack_modules } from '../../templates/webpack.compiler.js';
 import { readFileModule, readJSONFile, readFile } from '../../utils/readJson.js';
-import { executeCommand } from "../../utils/process.command.js";
+import { getHash } from '../../utils/generateHash.js';
 
 const baseDir = path.resolve(".");
 const baseEnv = path.join(path.resolve("."), "env");
 
-function getHash(longitud) {
-    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@|{[()¿';
-    let cadenaAleatoria = '';
-    for (let i = 0; i < longitud; i++) {
-        const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
-        cadenaAleatoria += caracteres.charAt(indiceAleatorio);
-    }
-    return cadenaAleatoria;
-}
 export async function command_create_api(options) {
 
+    if (readJSONFile("config.ms.json", baseDir) === null) {
+        console.log(`\n\t${red("Esta intentando crear una API en una carpeta que no es un proyecto de msback")}`);
+        return;
+    }
+    if (typeof options.service === "undefined") {
+        console.log(`\n\t${red("Debe especificar en que servicio se generará la nueva API (Ejemp: msback api -s admin)")}`)
+        return;
+    }
     let config_ms_file = readJSONFile("config.ms.json", baseDir);
     const service = config_ms_file.services.find((e) => e === options.service)
     if (service === undefined) {
-        console.log(`\n${red("no existe el servicio")}`)
+        console.log(`\n\t${red("No existe el servicio")}`)
         return;
     }
+
     const nameProject = service.toLowerCase();
     const root = path.join(baseDir, "src", nameProject);
     if (!fs.existsSync(root)) {
-        console.log(`\n${red("no existe el servicio")}`)
+        console.log(`\n\t${red("No existe el servicio")}`)
         return;
     }
 
@@ -44,6 +43,9 @@ export async function command_create_api(options) {
                 message: 'Ingrese nombre de la api:',
                 validate: function (input) {
                     if (input) {
+                        if (fs.existsSync(path.join(root, "controller", input.toLowerCase()))) {
+                            return "Ya existe la API";
+                        }
                         return true;
                     } else {
                         return 'Ingrese nombre de la api.';
@@ -77,6 +79,13 @@ export async function command_create_api(options) {
             }
         ])
         .then(async (answers) => {
+
+            if (fs.existsSync(path.join(root, "controller", answers.name.toLowerCase()))) {
+                console.log(`\n\t${red("Ya existe la API")}`)
+                return;
+            }
+            fs.mkdirSync(path.join(root, "controller", answers.name.toLowerCase()));
+
             const envFile = readFile(`.env.${nameProject}`, baseEnv);
             let hashes = `\nKEY_TOKEN_${answers.name.toUpperCase()}=${getHash(128)}\n`;
             if (answers.encrypt === "si") {
@@ -126,19 +135,13 @@ export async function command_create_api(options) {
             // ###################################### UPDATE SERVER ############################
 
             // ###################################### UPDATE ENV ############################
-            let hashesArr = envFile.split("#HASH")[0] + hashes;
-            const newDataEnv = `${hashesArr}#HASH${envFile.split("#HASH")[1]}`;
+            const newDataEnv = `${envFile.split("#HASH")[0]}${hashes}#HASH${envFile.split("#HASH")[1]}`;
             console.log(yellow("UPDATE FILE"), `env/.env.${nameProject}`);
             fs.writeFileSync(path.join(baseEnv, `.env.${nameProject}`), newDataEnv);
             // ###################################### UPDATE ENV ############################    
 
-            // ###################################### CREATE FOLDER API ############################
-            fs.mkdirSync(path.join(root, "controller", answers.name.toLowerCase()));
-            // ###################################### CREATE FOLDER API ############################
-
             console.log(yellow("UPDATE FILE"), "config.ms.json");
-            let config_ms_file = readJSONFile("config.ms.json", baseDir);
-            // ###################################### CREATE FOLDER API ############################
+            let config_ms_file = readJSONFile("config.ms.json", baseDir);            
             config_ms_file.service[nameProject].apis.push(answers.name.toLowerCase())
             Object.assign(config_ms_file.service[nameProject].api, JSON.parse(`
             {
@@ -150,7 +153,6 @@ export async function command_create_api(options) {
                 }
             }
             `));
-
             fs.writeFileSync(path.join(baseDir, "config.ms.json"), jsonFormat(config_ms_file));
         });
 }

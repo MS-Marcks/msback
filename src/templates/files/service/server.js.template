@@ -12,7 +12,7 @@ import {
 
 
 if (process.env.NODE_ENV !== 'production') {
-    require("dotenv").config({ path: "./env/.{{name}}.env" })
+    require("dotenv").config({ path: "./env/.env.{{name}}" })
 }
 
 const app = express()

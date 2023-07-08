@@ -10,8 +10,7 @@ export const readJSONFile = (filePath, root = null) => {
         const data = fs.readFileSync(path.join((root === null) ? baseDir : root, filePath), 'utf-8');
         return JSON.parse(data);
     } catch (error) {
-        console.log(error);
-        return 'Error al leer el archivo JSON';
+        return null;
     }
 }
 
@@ -20,8 +19,7 @@ export const readFile = (filePath, root = null) => {
         const data = fs.readFileSync(path.join((root === null) ? baseDir : root, filePath), 'utf-8');
         return data;
     } catch (error) {
-        console.log(error);
-        return 'Error al leer el archivo';
+        return null;
     }
 }
 
@@ -30,8 +28,7 @@ export const readJSONFileModule = (filePath) => {
         const data = fs.readFileSync(path.join(rootDirectory, filePath), 'utf-8');
         return JSON.parse(data);
     } catch (error) {
-        console.log(error);
-        return 'Error al leer el archivo JSON';
+        return null;
     }
 }
 
@@ -40,8 +37,7 @@ export const readFileModule = (filePath) => {
         const data = fs.readFileSync(path.join(rootDirectory, filePath), 'utf-8');
         return data;
     } catch (error) {
-        console.log(error);
-        return 'Error al leer el archivo';
+        return null;
     }
 }
 

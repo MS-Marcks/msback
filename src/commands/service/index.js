@@ -9,6 +9,12 @@ import { readFileModule, readJSONFile } from '../../utils/readJson.js';
 const baseDir = path.join(path.resolve("."));
 
 export function command_create_service() {
+
+    if (readJSONFile("config.ms.json", baseDir) === null) {
+        console.log(`\n\t${red("Esta intentando crear un servicio en una carpeta que no es un proyecto de msback")}`);
+        return;
+    }
+
     inquirer
         .prompt([
             {
@@ -17,6 +23,10 @@ export function command_create_service() {
                 message: 'Ingrese nombre del servicio:',
                 validate: function (input) {
                     if (input) {
+                        const root = path.join(baseDir, "src", input.toLowerCase());
+                        if (fs.existsSync(root)) {
+                            return "Ya existe el servicio";
+                        }
                         return true;
                     } else {
                         return 'Ingrese un nombre para el servicio.';
@@ -29,27 +39,16 @@ export function command_create_service() {
                 message: 'Ingrese el puerto del servicio:',
                 validate: function (input) {
                     if (input) {
+                        let config_ms_file = readJSONFile("config.ms.json", baseDir);
+                        if (config_ms_file.ports.find((e) => e === parseInt(input))) {
+                            return 'El puerto ya se esta usando en otro servicio.';
+                        }
                         return true;
                     } else {
                         return 'Ingrese el perto para el servicio.';
                     }
                 }
-            }
-            /*,
-            {
-                type: 'list',
-                name: 'engine',
-                message: 'Seleccione un motor de base de datos:',
-                choices: ['mysql', 'sqlserver', 'mariadb', 'sqlite'],
-                validate: function (input) {
-                    if (input) {
-                        return true;
-                    } else {
-                        return 'Seleccione un motor de base de datos';
-                    }
-                }
-            }*/
-            ,
+            },
             {
                 type: 'input',
                 name: 'server',
@@ -100,7 +99,7 @@ export function command_create_service() {
         .then(answers => {
             const root = path.join(baseDir, "src", answers.name.toLowerCase());
             if (fs.existsSync(root)) {
-                console.log(`\n${red("Ya existe el proyecto")}`)
+                console.log(`\n\t${red("Ya existe el servicio")}`)
                 return;
             }
             fs.mkdirSync(root);
@@ -130,6 +129,7 @@ export function command_create_service() {
             console.log(yellow("UPDATE FILE"), "config.ms.json");
             let config_ms_file = readJSONFile("config.ms.json", baseDir);
             config_ms_file.services.push(answers.name.toLowerCase());
+            config_ms_file.ports.push(parseInt(answers.portapp));
             Object.assign(config_ms_file.service, JSON.parse(`{"${answers.name.toLowerCase()}":{"name":"${answers.name.toLowerCase()}","apis":[],"api":{}}}`));
             fs.writeFileSync(path.join(baseDir, "config.ms.json"), jsonFormat(config_ms_file));
 
@@ -137,6 +137,7 @@ export function command_create_service() {
             "build-babel:${answers.name.toLowerCase()}": "babel -d ./dist ./src/${answers.name.toLowerCase()} -s",
             "build:${answers.name.toLowerCase()}": "npm run clean && npm run build-babel:${answers.name.toLowerCase()}",
             `;
+
             if (config_ms_file.bundle === "webpack") {
                 scripts += `"package:${answers.name.toLowerCase()}": "npm run build:${answers.name.toLowerCase()} && npm run webpack"}`
             } else if (config_ms_file.bundle === "esbuild") {
