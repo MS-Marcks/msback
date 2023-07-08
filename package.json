@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./src/index.js",
   "bin": {
-    "msback": "./src/index.js"
+    "msback": "./src/msback.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
