@@ -23,3 +23,7 @@ $ msback service
 ```cmd
 $ msback api -s [nombre del servicio]
 ```
+- **controller:** Genera un nuevo controlador
+```cmd
+$ msback controller -s [nombre del servicio] -a [nombre de la api]
+```
